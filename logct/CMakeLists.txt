@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.4.1)
 
-SET (CMAKE_C_FLAGS_DEBUG          "-g")
-SET (CMAKE_C_FLAGS_RELEASE        "-O2 -DNDEBUG")
+SET(CMAKE_C_FLAGS_DEBUG "-g")
+SET(CMAKE_C_FLAGS_RELEASE "-O2 -DNDEBUG")
 
 set(EXTERN_DIR ../Clogan)
 
@@ -13,11 +13,11 @@ link_directories(clogan.out)
 
 
 find_library( # Sets the name of the path variable.
-              log-lib
+        log-lib
 
-              # Specifies the name of the NDK library that
-              # you want CMake to locate.
-              log )
+        # Specifies the name of the NDK library that
+        # you want CMake to locate.
+        log)
 
 # Specifies libraries CMake should link to your target library. You
 # can link multiple libraries, such as libraries you define in this

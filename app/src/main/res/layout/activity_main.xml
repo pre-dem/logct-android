@@ -23,37 +23,13 @@
         android:text="测试LogCT单条写入"
         android:textColor="@android:color/white" />
 
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_margin="10dp"
-        android:orientation="horizontal">
-
-        <Button
-            android:id="@+id/send_btn"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@android:color/background_dark"
-            android:text="测试LogCT上报"
-            android:textColor="@android:color/white" />
-
-        <EditText
-            android:id="@+id/send_ip"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginLeft="10dp"
-            android:hint="请输入server的ip地址"
-            android:textColor="@android:color/black" />
-
-    </LinearLayout>
-
     <Button
         android:id="@+id/send_btn_default"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="10dp"
         android:background="@android:color/background_dark"
-        android:text="测试LogCT默认上报方式"
+        android:text="测试LogCT上报"
         android:textColor="@android:color/white" />
 
     <Button

@@ -25,11 +25,11 @@ public class MyApplication extends Application {
         String cachePath = getApplicationContext().getFilesDir().getAbsolutePath();
         String path = getApplicationContext().getExternalFilesDir(null).getAbsolutePath()
                 + File.separator + FILE_NAME;
-        Config config = new Config.Builder("http://bhk5aaghth5n.predem.qiniuapi.com", "BawEHOtHwsvrgiAqbGFujmLc")
+        Config config = new Config.Builder("192.168.31.173:9998", "")
                 .setCachePath(cachePath)
                 .setPath(path)
                 .build();
-        LogCT.init(config);
+        LogCT.init(config, getApplicationContext());
         LogCT.setDebug(true);
     }
 }

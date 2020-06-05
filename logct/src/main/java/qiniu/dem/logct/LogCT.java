@@ -1,13 +1,17 @@
 package qiniu.dem.logct;
 
+import android.content.Context;
+
 import java.util.Map;
 
 public final class LogCT {
 
+    public static final String Version = "0.0.2";
+
     private static LogCTImpl instance = new LogCTImpl();
 
-    public static int init(Config config) {
-        return instance.init(config);
+    public static int init(Config config, Context context) {
+        return instance.init(config, context);
     }
 
     public static void setDeviceInfo(DeviceInfo info) {

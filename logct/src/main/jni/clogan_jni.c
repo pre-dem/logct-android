@@ -24,9 +24,9 @@
 
 JNIEXPORT jint JNICALL
 Java_qiniu_dem_logct_Logan_cwrite(JNIEnv *env, jobject instance, jint flag,
-                                                     jstring log_, jlong local_time,
-                                                     jstring thread_name_, jlong thread_id,
-                                                     jint is_main) {
+                                  jstring log_, jlong local_time,
+                                  jstring thread_name_, jlong thread_id,
+                                  jint is_main) {
     const char *log = (*env)->GetStringUTFChars(env, log_, 0);
     const char *thread_name = (*env)->GetStringUTFChars(env, thread_name_, 0);
 
@@ -40,9 +40,9 @@ Java_qiniu_dem_logct_Logan_cwrite(JNIEnv *env, jobject instance, jint flag,
 
 JNIEXPORT jint JNICALL
 Java_qiniu_dem_logct_Logan_cinit(JNIEnv *env, jobject instance,
-                                                    jstring cache_path_,
-                                                    jstring dir_path_, jint max_file,
-                                                    jstring encrypt_key16_, jstring encrypt_iv16_) {
+                                 jstring cache_path_,
+                                 jstring dir_path_, jint max_file,
+                                 jstring encrypt_key16_, jstring encrypt_iv16_) {
     const char *dir_path = (*env)->GetStringUTFChars(env, dir_path_, 0);
     const char *cache_path = (*env)->GetStringUTFChars(env, cache_path_, 0);
     const char *encrypt_key16 = (*env)->GetStringUTFChars(env, encrypt_key16_, 0);

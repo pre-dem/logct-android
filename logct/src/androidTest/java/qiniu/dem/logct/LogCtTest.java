@@ -1,25 +1,3 @@
-/*
- * Copyright (c) 2018-present, 美团点评
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- */
-
 package qiniu.dem.logct;
 
 import android.content.Context;
@@ -67,11 +45,11 @@ public class LogCtTest {
         String cachePath = applicationContext.getFilesDir().getAbsolutePath();
         String path = applicationContext.getExternalFilesDir(null).getAbsolutePath()
                 + File.separator + FILE_NAME;
-        Config config = new Config.Builder("http://bhk5aaghth5n.predem.qiniuapi.com", "BawEHOtHwsvrgiAqbGFujmLc")
+        Config config = new Config.Builder("", "")
                 .setCachePath(cachePath)
                 .setPath(path)
                 .build();
-        LogCT.init(config);
+        LogCT.init(config, null);
         LogCT.setDebug(true);
     }
 
@@ -91,7 +69,7 @@ public class LogCtTest {
         LogCT.upload(getTodayDate(), new UploadHandler() {
             @Override
             public void complete(int code, String data) {
-                System.out.println("today " + code);
+                SystemInfo.out.println("today " + code);
             }
         });
     }
@@ -112,7 +90,7 @@ public class LogCtTest {
     // Functions
 
     private String getTodayDate() {
-        return mDateFormat.format(new Date(System.currentTimeMillis()));
+        return mDateFormat.format(new Date(SystemInfo.currentTimeMillis()));
     }
 
     private void assertWriteLog() throws InterruptedException {

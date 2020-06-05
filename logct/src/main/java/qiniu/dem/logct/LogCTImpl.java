@@ -1,5 +1,6 @@
 package qiniu.dem.logct;
 
+import android.content.Context;
 import android.os.Looper;
 import android.os.StatFs;
 import android.text.TextUtils;
@@ -10,6 +11,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -21,7 +23,7 @@ import java.util.concurrent.ThreadFactory;
 
 final class LogCTImpl implements Runnable {
     private static final String TAG = "LogCTImpl";
-    private static final int CACHE_SIZE = 1024;
+    private static final int CACHE_SIZE = 8 * 1024;
     private static final int MINUTE = 60 * 1000;
     private static final long LONG = 24 * 60 * 60 * 1000;
     private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
@@ -29,6 +31,7 @@ final class LogCTImpl implements Runnable {
     private final Logan logan;
     private final Object sync = new Object();
     private final Object sendSync = new Object();
+    volatile int lastErrorCode;
     private Thread thread;
     private ConcurrentLinkedQueue<LogCTRunnable> mTaskQueue = new ConcurrentLinkedQueue<>();
     private String mCachePath; // 缓存文件路径
@@ -39,21 +42,18 @@ final class LogCTImpl implements Runnable {
     private long mMaxQueue; //最大队列数
     private String mEncryptKey16;
     private String mEncryptIv16;
-    private String appID;
-    private DeviceInfo info;
+    private String mAppID;
+    private String mServer;
+    private DeviceInfo mInfo;
     private volatile boolean mIsRun = true;
-
     private long mCurrentDay;
     private boolean mIsWorking;
     private File mFileDirectory;
     private boolean mIsSDCard;
     private long mLastTime;
     private ExecutorService mSingleThreadExecutor;
-
     private ConcurrentLinkedQueue<LogCTRunnable> mSendQueue = new ConcurrentLinkedQueue<>();
-
     private volatile boolean isSending;
-    volatile int lastErrorCode;
 
     LogCTImpl() {
         logan = new Logan();
@@ -76,7 +76,7 @@ final class LogCTImpl implements Runnable {
         return dateFormat.format(new Date(time));
     }
 
-    int init(Config config) {
+    int init(Config config, Context context) {
         mPath = config.mPathPath;
         mCachePath = config.mCachePath;
         mSaveTime = config.mDay;
@@ -85,6 +85,9 @@ final class LogCTImpl implements Runnable {
         mMaxQueue = config.mMaxQueue;
         mEncryptKey16 = config.mEncryptKey16;
         mEncryptIv16 = config.mEncryptIv16;
+        mAppID = config.mAppId;
+        mServer = config.mServer;
+        Log.d(TAG, mServer);
         mTaskQueue.add(new LogCTRunnable() {
             @Override
             public void run(LogCTImpl l) {
@@ -153,6 +156,16 @@ final class LogCTImpl implements Runnable {
         return new File(mPath);
     }
 
+    private long getDateTime(String time) {
+        long tempTime = 0;
+        try {
+            tempTime = dateFormat.parse(time).getTime();
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        return tempTime;
+    }
+
     @Override
     public void run() {
         while (mIsRun) {
@@ -193,7 +206,7 @@ final class LogCTImpl implements Runnable {
     }
 
     public void setInfo(DeviceInfo info) {
-        this.info = info;
+        this.mInfo = info;
     }
 
     private boolean isDay() {
@@ -262,15 +275,20 @@ final class LogCTImpl implements Runnable {
         logan.write(type, log, localTime, threadName, threadId, isMainThread);
     }
 
+    private String buildUrl(){
+        return String.format("%s/logct/v1/native/%s/tasks", mServer, mAppID);
+    }
+
     void doSend(String date, final UploadHandler handler) {
         if (mDebug) {
             Log.d(TAG, "LogCT send start");
         }
-
-        String path = prepareLogFile(date);
+        long time = getDateTime(date);
+        String name = String.valueOf(time);
+        String path = prepareLogFile(name);
         if (path == null) {
             if (mDebug) {
-                Log.d(TAG, "LogCT prepare log file failed, can't find log file: " + path);
+                Log.d(TAG, "LogCT prepare log file failed, can't find log file");
             }
             return;
         }
@@ -295,6 +313,7 @@ final class LogCTImpl implements Runnable {
 
         if (!isSending) {
             isSending = true;
+
             mSingleThreadExecutor.execute(new Uploader(new UploadHandler() {
                 @Override
                 public void complete(int code, String data) {
@@ -304,7 +323,7 @@ final class LogCTImpl implements Runnable {
                     notifyRun();
                     handler.complete(code, data);
                 }
-            }, info, path));
+            }, mInfo, path, buildUrl(), date));
         } else {
             mSendQueue.add(new UploadTask(date, handler));
         }
@@ -323,9 +342,6 @@ final class LogCTImpl implements Runnable {
                 doFlush();
                 String des = mPath + File.separator + date + ".copy";
                 if (copyFile(src, des)) {
-                    if (mDebug) {
-                        Log.d(TAG, "prepare log file copy success: " + des);
-                    }
                     return des;
                 }
             } else {

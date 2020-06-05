@@ -1,7 +1,10 @@
 package qiniu.dem.logct;
 
-import android.text.TextUtils;
+import android.os.Build;
+import android.util.Base64;
 import android.util.Log;
+
+import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -26,20 +29,62 @@ final class Uploader implements Runnable {
     private static final String TAG = "Uploader";
 
     private final Map<String, String> mRequestHeaders;
-    private final DeviceInfo info;
     private final String path;
     private final UploadHandler mSendLogCallback;
-    private String mUploadLogUrl;
+    private final String mUploadLogUrl;
+    private final String mDate;
 
-    Uploader(UploadHandler handler, DeviceInfo info, String path) {
-        this.info = info;
+    Uploader(UploadHandler handler, DeviceInfo info, String path, String url, String date) {
         this.path = path;
-        mRequestHeaders = new HashMap<>();
+        mRequestHeaders = header(info);
         mSendLogCallback = handler;
+        mUploadLogUrl = url;
+        mDate = date;
+    }
+
+    private static void putNotEmpty(Map<String, String> m, String value, String key) {
+        if (value != null && !value.equals("")) {
+            m.put(key, value);
+        }
+    }
+
+
+    private static String infoHeader(DeviceInfo info) {
+        Map<String,String> dict = new HashMap<>();
+        putNotEmpty(dict, info.userID, "user");
+        putNotEmpty(dict, info.deviceID, "deviceId");
+        putNotEmpty(dict, info.channel, "channel");
+        putNotEmpty(dict, info.provider, "provider");
+        putNotEmpty(dict, info.extra, "extra");
+
+        dict.put("platform", "Android");
+        dict.put("sdkVersion", LogCT.Version);
+        dict.put("osVersion", SystemInfo.osVersion());
+        dict.put("manufacturer", Build.MANUFACTURER.trim());
+        dict.put("deviceType", SystemInfo.device());
+
+        dict.put("bundleVersion", SystemInfo.appVersion);
+        dict.put("appVersion", SystemInfo.appVersion);
+        dict.put("appName", SystemInfo.appName);
+        dict.put("packageId", SystemInfo.packageId);
+
+        JSONObject o = new JSONObject(dict);
+        String s = o.toString();
+        byte[] encode = Base64.encode(s.getBytes(), Base64.NO_WRAP);
+        return new String(encode);
+    }
+
+    private Map<String,String> header(DeviceInfo info){
+        String infoStr = infoHeader(info);
+        Map<String, String> h = new HashMap<>();
+        h.put("X-REQINFO", infoStr);
+        h.put("fileDate", mDate);
+        h.put("Content-Type", "binary/octet-stream");
+        return h;
     }
 
     public void sendLog(File logFile) {
-        doSendFileByAction(logFile, mRequestHeaders, mUploadLogUrl);
+        sendFile(logFile, mRequestHeaders, mUploadLogUrl);
         // Must Call finish after send log
         mSendLogCallback.complete(ErrorCode.OK, null);
         if (logFile.getName().contains(".copy")) {
@@ -47,32 +92,11 @@ final class Uploader implements Runnable {
         }
     }
 
-    /**
-     * set upload log url.
-     *
-     * @param uploadLogUrl
-     */
-    public void setUrl(String uploadLogUrl) {
-        mUploadLogUrl = uploadLogUrl;
-    }
-
-    /**
-     * set request header.
-     *
-     * @param headers
-     */
-    public void setRequestHeader(Map<String, String> headers) {
-        mRequestHeaders.clear();
-        if (headers != null) {
-            mRequestHeaders.putAll(headers);
-        }
-    }
-
-    private void doSendFileByAction(File logFile, Map<String, String> headers, String url) {
+    private void sendFile(File logFile, Map<String, String> headers, String url) {
         try {
             FileInputStream fileStream = new FileInputStream(logFile);
             doPostRequest(url, fileStream, headers);
-        } catch (FileNotFoundException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
@@ -163,6 +187,9 @@ final class Uploader implements Runnable {
             }
         }
         Log.d(TAG, "log send completed, http statusCode : " + statusCode);
+        if (data == null) {
+            data = new byte[0];
+        }
         mSendLogCallback.complete(statusCode, new String(data));
     }
 
