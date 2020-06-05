@@ -6,7 +6,7 @@ import java.util.Map;
 
 public final class LogCT {
 
-    public static final String Version = "0.0.2";
+    public static final String Version = "0.1.0";
 
     private static LogCTImpl instance = new LogCTImpl();
 
